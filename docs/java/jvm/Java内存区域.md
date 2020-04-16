@@ -52,7 +52,9 @@
 
 ## 一 概述
 
-对于 Java 程序员来说，在虚拟机自动内存管理机制下，不再需要像 C/C++程序开发程序员这样为内一个 new 操作去写对应的 delete/free 操作，不容易出现内存泄漏和内存溢出问题。正是因为 Java 程序员把内存控制权利交给 Java 虚拟机，一旦出现内存泄漏和溢出方面的问题，如果不了解虚拟机是怎样使用内存的，那么排查错误将会是一个非常艰巨的任务。
+对于 Java 程序员来说，在虚拟机自动内存管理机制下，不再需要像 C/C++程序开发程序员这样为内一个 new 操作去写对应的 delete/free 操作，不容易出现内存泄漏和内存溢出问题。**正是因为 Java 程序员把内存控制权利交给 Java 虚拟机**，一旦出现内存泄漏和溢出方面的问题，如果不了解虚拟机是怎样使用内存的，那么排查错误将会是一个非常艰巨的任务。
+
+​	jvm(java vatual machine)：hotspot，oracle公司！
 
 ## 二 运行时数据区域
 Java 虚拟机在执行 Java 程序的过程中会把它管理的内存划分成若干个不同的数据区域。JDK. 1.8 和之前的版本略有不同，下面会介绍到。
@@ -81,7 +83,7 @@ Java 虚拟机在执行 Java 程序的过程中会把它管理的内存划分成
 - 方法区
 - 直接内存 (非运行时数据区的一部分)
 
-### 2.1 程序计数器
+### 2.1 程序计数器(物理上对应于cpu寄存器：读取速度非常快，线程私有)
 程序计数器是一块较小的内存空间，可以看作是当前线程所执行的字节码的行号指示器。**字节码解释器工作时通过改变这个计数器的值来选取下一条需要执行的字节码指令，分支、循环、跳转、异常处理、线程恢复等功能都需要依赖这个计数器来完。**
 
 另外，**为了线程切换后能恢复到正确的执行位置，每条线程都需要有一个独立的程序计数器，各线程之间计数器互不影响，独立存储，我们称这类内存区域为“线程私有”的内存。**
@@ -89,24 +91,96 @@ Java 虚拟机在执行 Java 程序的过程中会把它管理的内存划分成
 **从上面的介绍中我们知道程序计数器主要有两个作用：**
 
 1. 字节码解释器通过改变程序计数器来依次读取指令，从而实现代码的流程控制，如：顺序执行、选择、循环、异常处理。
-2. 在多线程的情况下，程序计数器用于记录当前线程执行的位置，从而当线程被切换回来的时候能够知道该线程上次运行到哪儿了。
+2. 在多线程的情况下，程序计数器用于**记录当前线程执行的位置**，从而当线程被切换回来的时候能够知道该线程上次运行到哪儿了。
 
 **注意：程序计数器是唯一一个不会出现 OutOfMemoryError 的内存区域，它的生命周期随着线程的创建而创建，随着线程的结束而死亡。**
 
-### 2.2 Java 虚拟机栈
+```
+线程切换：cpu时间片的充分利用！程序中断需要记住执行到的地点！
+```
+
+### 2.2 Java 虚拟机栈(1线程私有,垃圾回收不涉及栈内存,方法运行时需要的内存 )
 
 **与程序计数器一样，Java 虚拟机栈也是线程私有的，它的生命周期和线程相同，描述的是 Java 方法执行的内存模型，每次方法调用的数据都是通过栈传递的。**
 
-**Java 内存可以粗糙的区分为堆内存（Heap）和栈内存 (Stack),其中栈就是现在说的虚拟机栈，或者说是虚拟机栈中局部变量表部分。** （实际上，Java 虚拟机栈是由一个个栈帧组成，而每个栈帧中都拥有：局部变量表、操作数栈、动态链接、方法出口信息。）
+**Java 内存可以粗糙的区分为堆内存（Heap）和栈内存 (Stack),其中栈就是现在说的虚拟机栈，或者说是虚拟机栈中局部变量表部分。** （实际上，Java 虚拟机栈是由一个个栈帧  (方法运行时需要的内存结构)  组成，而每个栈帧中都拥有：局部变量表、操作数栈、动态链接、方法出口信息。只有一个活动栈帧）
+
+```todo
+//两个线程  1 ， 2
+static int x =0;
+两个线程都对其作出变化，这个是线程不安全的
+```
 
 **局部变量表主要存放了编译器可知的各种数据类型**（boolean、byte、char、short、int、float、long、double）、**对象引用**（reference 类型，它不同于对象本身，可能是一个指向对象起始地址的引用指针，也可能是指向一个代表对象的句柄或其他与此对象相关的位置）。
+
+```java
+//局部变量的线程安全问题
+public class stacksecurity{
+    psvm{}
+    //安全
+    psv m1(){
+      StringBuilder sb= new StringBuilder();
+      sb.append(1);
+      sb.append(2);
+      sb.append(3);
+      sout.sb
+    }
+    //不安全
+    psv m2(StringBuilder sb){
+      sb.append(1);
+      sb.append(2);
+      sb.append(3);
+      sout.sb
+    }
+    //不安全，返回结果(并发修改)
+    ps StringBuilder m3(){
+      StringBuilder sb= new StringBuilder();
+      sb.append(1);
+      sb.append(2);
+      sb.append(3);
+      return sb;
+    }
+}
+```
 
 **Java 虚拟机栈会出现两种异常：StackOverFlowError 和 OutOfMemoryError。**
 
 - **StackOverFlowError：** 若 Java 虚拟机栈的内存大小不允许动态扩展，那么当线程请求栈的深度超过当前 Java 虚拟机栈的最大深度的时候，就抛出 StackOverFlowError 异常。
+
+  ```java
+  //1,方法的递归调用！栈帧过多(对象的循环引用(json解析会导致错误，@jsonIgnore))   -Xss256k
+  //2,栈帧过大！
+  //栈内存溢出
+  class stackorerFlowtest(){
+      private static int count;
+      
+      psvm(){
+          try(){
+              method1();
+          }catch(){
+              e.printStackTrace();
+              System.out.print(count)
+          }
+      }
+     //此处递归调用
+      private static void method1(){
+          count++;
+          method1();
+      }
+  }
+  ```
+
 - **OutOfMemoryError：** 若 Java 虚拟机栈的内存大小允许动态扩展，且当线程请求栈时内存用完了，无法再动态扩展了，此时抛出 OutOfMemoryError 异常。
 
-Java 虚拟机栈也是线程私有的，每个线程都有各自的 Java 虚拟机栈，而且随着线程的创建而创建，随着线程的死亡而死亡。
+- 
+
+Java 虚拟机栈也是线程私有的，每个线程都有各自的 Java 虚拟机栈，而且随着线程的创建而创建，随着线程的死亡而死亡。 
+
+**2不是越大越好**
+
+参数-Xss size  ： -Xss 1m   -Xss 124k(物理内存： 500m   栈内存1m   500个线程   如果设置为2m  只能有250个会影响线程数目 )
+
+3方法内的局部变量是否是线程安全的？ 只作用于方法内部,安全  2) 局部变量引用了对象，不安全的
 
 **扩展：那么方法/函数如何调用？**
 
@@ -118,6 +192,20 @@ Java 方法有两种返回方式：
 2. 抛出异常。
 
 不管哪种返回方式都会导致栈帧被弹出。
+
+```java
+//cpu占用过高
+nohup java class //后台运行java代码 linux
+top  //linux 查看cpu占用  有pid
+    
+ps H -eo pid，tid，%cpu | grep pid //查看线程 -eo 感兴趣的内容 线程占用cpu  grep过滤
+    
+jstack pid  //查看线程 线程编号在是 10进制  转换为x16,对比定位!可以直接定位代码
+
+//运行没有结果：死锁
+```
+
+
 
 ### 2.3 本地方法栈
 
@@ -139,15 +227,92 @@ Java 堆是垃圾收集器管理的主要区域，因此也被称作**GC 堆（G
 
 上图所示的 eden 区、s0 区、s1 区都属于新生代，tentired 区属于老年代。大部分情况，对象都会首先在 Eden 区域分配，在一次新生代垃圾回收后，如果对象还存活，则会进入 s0 或者 s1，并且对象的年龄还会加 1(Eden 区->Survivor 区后对象的初始年龄变为 1)，当它的年龄增加到一定程度（默认为 15 岁），就会被晋升到老年代中。对象晋升到老年代的年龄阈值，可以通过参数 `-XX:MaxTenuringThreshold` 来设置。
 
-### 2.5 方法区
+```java
+//OOM java heap space
+//-Xmx 8m
+例子：list一直添加，一直引用不能回收！
+
+堆内存诊断：
+	jps //查询java进程
+			//todo
+	jmap -heap pid //查看堆内存占用
+			//todo
+	jconsole //多功能，检测工具
+	jvisualVM
+			//TODO
+案例：垃圾回收之后内存占用依然很高
+	jconsole 执行回收，
+	jvisualVM 堆快照 检查 内存大于多少的对象，elementData 元素，引用导致回收不了！
+```
+
+### 2.5 方法区(包含运行时常量池)
 
 方法区与 Java 堆一样，是各个线程共享的内存区域，它用于存储已被虚拟机加载的类信息、常量、静态变量、即时编译器编译后的代码等数据。虽然 Java 虚拟机规范把方法区描述为堆的一个逻辑部分，但是它却有一个别名叫做 **Non-Heap（非堆）**，目的应该是与 Java 堆区分开来。
 
 方法区也被称为永久代。很多人都会分不清方法区和永久代的关系，为此我也查阅了文献。
 
-#### 2.5.1 方法区和永久代的关系
+#### 2.5.1 方法区和永久代的关系(永久代Hotspot虚拟机1.8之前的叫法，元空间)
 
 > 《Java 虚拟机规范》只是规定了有方法区这么个概念和它的作用，并没有规定如何去实现它。那么，在不同的 JVM 上方法区的实现肯定是不同的了。  **方法区和永久代的关系很像 Java 中接口和类的关系，类实现了接口，而永久代就是 HotSpot 虚拟机对虚拟机规范中方法区的一种实现方式。** 也就是说，永久代是 HotSpot 的概念，方法区是 Java 虚拟机规范中的定义，是一种规范，而永久代是一种实现，一个是标准一个是实现，其他的虚拟机实现并没有永久带这一说法。
+
+
+
+```java
+//方法区内存结构
+1.6   
+    
+1.8 
+   堆内存
+/**
+ * 演示元空间内存溢出：使用系统内存   java.lang.OutOfMemoryError: Metaspace
+ * -XX:MaxMetaspaceSize=8m
+ */
+public class Demo1_8 extends ClassLoader { // 可以用来加载类的二进制字节码
+    public static void main(String[] args) {
+        int j = 0;
+        try {
+            Demo1_8 test = new Demo1_8();
+            for (int i = 0; i < 10000; i++, j++) {
+                // ClassWriter 作用是生成类的二进制字节码
+                ClassWriter cw = new ClassWriter(0);
+                // 版本号， public， 类名, 包名, 父类， 接口
+                cw.visit(Opcodes.V1_8, Opcodes.ACC_PUBLIC, "Class" + i, null, "java/lang/Object", null);
+                // 返回 byte[]
+                byte[] code = cw.toByteArray();
+                // 执行了类的加载
+                test.defineClass("Class" + i, code, 0, code.length); // Class 对象
+            }
+        } finally {
+            System.out.println(j);
+        }
+    }
+}
+
+/**
+ * 演示永久代内存溢出  java.lang.OutOfMemoryError: PermGen space
+ * -XX:MaxPermSize=8m 最大元空间大小
+ */
+public class Demo1_8 extends ClassLoader {
+    public static void main(String[] args) {
+        int j = 0;
+        try {
+            Demo1_8 test = new Demo1_8();
+            for (int i = 0; i < 20000; i++, j++) {
+                ClassWriter cw = new ClassWriter(0);
+                cw.visit(Opcodes.V1_6, Opcodes.ACC_PUBLIC, "Class" + i, null, "java/lang/Object", null);
+                byte[] code = cw.toByteArray();
+                test.defineClass("Class" + i, code, 0, code.length);
+            }
+        } finally {
+            System.out.println(j);
+        }
+    }
+}
+
+//CGlib   spring->aop  mybatis--->  ClassWriter implements ClassVisitor  动态生成类的字节码
+```
+
+
 
 #### 2.5.2 常用参数
 
@@ -183,10 +348,107 @@ JDK 1.8 的时候，方法区（HotSpot 的永久代）被彻底移除了（JDK1
 
 既然运行时常量池时方法区的一部分，自然受到方法区内存的限制，当常量池无法再申请到内存时会抛出 OutOfMemoryError 异常。
 
+```java
+javac //编译文件
+javap -v class //详细信息   -c
+    类的基本信息，常量池，类方法定义(虚拟机指令)，
+helloWorld : getstatic #2(查表)  ldc #3(查表)：加载参数  invokevirtual #4：执行虚方法调用    return
+```
+
+```java
+常量池：字节码文件   运行->运行时常量池
+StringTable (串池：字符串常量池，ldc 指令会把常量池中的符号(不在串池)，加载到StringTable(运用了hashCode只会存在一份)中)
+//TODO 
+    invokespecial 
+    String s1="a"；String s2="a"；String s3="ab"； String s4=s1+s2；
+    //new StringBuilder().append("a").append("b")=value；
+    //new String(value)=s4； 所以s3==s4 为false   一个是堆，一个是StringTable
+    
+    String s5="a"+"b"；  常量 javac编译期间优化-->"ab"   ldc "ab"   s5=s3   true
+    idea memory   java.lang.string个数 
+1.8环境：
+String.intern();没有放入串池，有则不放入，返回串池中的对象！
+	//todo 
+1.6环境：
+String.intern();没有放入串池，有则不放入,String拷贝一份 存在于堆中，返回串池中的对象！
+```
+
+
+
 **JDK1.7 及之后版本的 JVM 已经将运行时常量池从方法区中移了出来，在 Java 堆（Heap）中开辟了一块区域存放运行时常量池。** 
+
+​	字符串对象使用很频繁：
+
+​	1.6永久代回收效率很低  full gc才会回收，1.8元空间 minner gc 
 
 ![](http://my-blog-to-use.oss-cn-beijing.aliyuncs.com/18-9-14/26038433.jpg)
 ——图片来源：https://blog.csdn.net/wangbiao007/article/details/78545189
+
+
+
+```java
+/**
+ * 演示 StringTable 位置        内存溢出永久代 permGen space
+ * 在jdk8下设置 -Xmx10m -XX:-UseGCOverheadLimit
+ * 在jdk6下设置 -XX:MaxPermSize=10m
+ */
+public class Demo1_6 {
+
+    public static void main(String[] args) throws InterruptedException {
+        List<String> list = new ArrayList<String>();
+        int i = 0;
+        try {
+            for (int j = 0; j < 260000; j++) {
+                list.add(String.valueOf(j).intern());
+                i++;
+            }
+        } catch (Throwable e) {
+            e.printStackTrace();
+        } finally {
+            System.out.println(i);
+        }
+    }
+}
+UseGCOverheadLimit ：   98% 的时间花费垃圾回收商，2%垃圾被回收！ 报错 GCOverheadLimit
+
+/**
+ * 演示 StringTable 垃圾回收 参数
+ * -XX:MaxPermSize=10m -XX:+PrintStringTableStatistics -XX:+PrintGCDetails -verbose:gc
+ */
+public class Demo1_7 {
+    // 1754 
+    public static void main(String[] args) throws InterruptedException {
+        int i = 0;
+        try {
+            for (int j = 0; j < 500000; j++) { // j=10, j=1000000
+                String.valueOf(j).intern();
+                i++;
+            }
+        } catch (Throwable e) {
+            e.printStackTrace();
+        } finally {
+            System.out.println(i);
+        }
+
+    }
+}
+//todo  读取单词案例：
+StringTable优化：  
+	1.字符串用的多的话：下面参数设置大一些！
+	2.考虑入池，不会重复！节省内存，
+
+stringTable statistics: //垃圾回收StringTable相关信息
+	buckets:桶的个数   个数过多会导致垃圾回收  -XX：StringTableSize:1009 设置个数
+	entries:键值对个数
+	literals：字符串个数  1m左右的大小
+	
+垃圾回收：
+	1m左右的大小，不够就会垃圾回收！
+
+
+```
+
+
 
 
 ### 2.7 直接内存
@@ -196,6 +458,76 @@ JDK 1.8 的时候，方法区（HotSpot 的永久代）被彻底移除了（JDK1
 JDK1.4 中新加入的 **NIO(New Input/Output) 类**，引入了一种基于**通道（Channel）** 与**缓存区（Buffer）** 的 I/O 方式，它可以直接使用 Native 函数库直接分配堆外内存，然后通过一个存储在 Java 堆中的 DirectByteBuffer 对象作为这块内存的引用进行操作。这样就能在一些场景中显著提高性能，因为**避免了在 Java 堆和 Native 堆之间来回复制数据**。
 
 本机直接内存的分配不会收到 Java 堆的限制，但是，既然是内存就会受到本机总内存大小以及处理器寻址空间的限制。
+
+```java
+大文件读写：  nio     用于数据缓冲区
+用户态      用户态    
+	 |    |            cpu
+	 内核态
+	 
+java 堆内存             内存
+		
+    使用direct memory	  系统内存    联系内存 ByteBuffer.allocateDirect(_1m) 分配一块系统内存(java代码可以直接访问)
+					  
+					  磁盘文件
+//OOM DIRECT BUFFER MEMORY
+
+
+/**
+ * 禁用显式回收对直接内存的影响    -XX:+DisableExplicitGC 显式的  sys.gc()；
+ */
+public class Demo1_26 {
+    static int _1Gb = 1024 * 1024 * 1024;
+
+    /*
+     * -XX:+DisableExplicitGC 显式的
+     */
+    public static void main(String[] args) throws IOException {
+        ByteBuffer byteBuffer = ByteBuffer.allocateDirect(_1Gb);  //调用 Unsafe 分配与释放
+        System.out.println("分配完毕...");
+        System.in.read();
+        System.out.println("开始释放...");
+        byteBuffer = null;
+        System.gc(); // 显式的垃圾回收，Full GC
+        System.in.read();
+    }
+}
+
+
+/**
+ * 直接内存分配的底层原理：Unsafe  (内存分配)
+ */
+public class Demo1_27 {
+    static int _1Gb = 1024 * 1024 * 1024;
+
+    public static void main(String[] args) throws IOException {
+        Unsafe unsafe = getUnsafe();
+        // 分配内存
+        long base = unsafe.allocateMemory(_1Gb);
+        unsafe.setMemory(base, _1Gb, (byte) 0);
+        System.in.read();
+
+        // 释放内存
+        unsafe.freeMemory(base);
+        System.in.read();
+    }
+
+    public static Unsafe getUnsafe() {
+        try {
+            Field f = Unsafe.class.getDeclaredField("theUnsafe");
+            f.setAccessible(true);
+            Unsafe unsafe = (Unsafe) f.get(null);
+            return unsafe;
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+}
+
+//clearner 虚引用对象    如果被回收，会触发clear() 来操作的
+```
+
+
 
 
 ## 三 HotSpot 虚拟机对象探秘
