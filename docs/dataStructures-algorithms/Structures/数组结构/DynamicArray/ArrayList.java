@@ -1,3 +1,5 @@
+package DynamicArray;
+
 /**
  * @vab size
  * @vab elements
@@ -6,6 +8,9 @@
  *     引用数据
  *          局部变量放在占空间
  *          new 关键字  储存单元放在堆空间
+ *      复杂度震荡:
+ *          缩容与扩容的倍数 不要相乘等于1,如果达到一定的数量
+ *          ,频繁的增减复杂度就会维持在一个较高的水平
  *
  */
 @SuppressWarnings("uncheck")
@@ -73,8 +78,9 @@ public class ArrayList<E> {
         if (index<0 || index >size ){
             throw new IndexOutOfBoundsException("Index:" + index + ",Size:" + size);
         }
-        for (int i = size-1;i<=index;i--){
-            elements[i+1]=elements[i];
+        //
+        for (int i = size;i>index;i--){
+            elements[i]=elements[i-1];
         }
         //存放新元素
         elements[index] = element;
@@ -109,22 +115,25 @@ public class ArrayList<E> {
      */
     public E remove(int index){
         rangeCheck(index);
-        for (int i = index +1; i <= size - 1; i++) {
+        E old = elements[index];
+        for (int i = index +1; i < size; i++) {
             elements[i-1] = elements[i];
         }
-        E old = elements[index];
-        size--;
+        elements[--size] =  null;
         return old;
     }
 
     /**
-     * 清除所有元素
+     * 清除所有元素(泛型)
      */
     public void clear(){
         //GC work
         // 申请内存空间，消耗内存空间 消耗时间
         // 可以不用清空元素，下次可能用到
-        size=0;
+        for (int i = 0; i < size; i++) {
+            elements[i]=null;//元素制空，
+        }
+        size = 0;
     }
 
     public boolean contains(E element){
@@ -162,11 +171,22 @@ public class ArrayList<E> {
      * @return
      */
     public int indexOf(E element){
-        for (int i = 0; i < size; i++) {
-            if (elements[i]==element){
-                return i;
+        if (element==null){
+            for (int i = 0; i < size; i++) {
+                //比较逻辑 obj.equals()  null不能使用eauqls
+                if (element.equals(elements[i])){
+                    return i;
+                }
+            }
+        }else {
+            for (int i = 0; i < size; i++) {
+                //比较逻辑 obj.equals()  null不能使用eauqls
+                if (elements[i]==element){
+                    return i;
+                }
             }
         }
+
         //定义静态变量 -1 element_not_found
         return -1;
     }
