@@ -19,8 +19,36 @@ import java.util.Queue;
  *          元素必须具备可比较性
  *          @see Integer#compare(int, int)
  *
- *          打印器
- *          110
+ *          110打印器
+ *
+ *          //增强遍历(随时停止)
+ *              遍历的应用:练习前序遍历打印二叉树
+ *                          层序遍历:计算二叉树的高度
+ *                          判断一棵树是否是完全二叉树
+ *                          反转二叉树
+ *
+ *          //根据遍历结果重构二叉树: 知道 前序遍历 +中序遍历 或者  后序遍历+中序遍历
+ *              如果知道前序遍历 + 后序遍历   是一个真二叉树结果唯一
+ *          //求 给定节点的  前驱节点:
+ *              如果给定节点的左节点不为空,取出节点  然后一直右直到为空的上一个即为前驱节点
+ *              如果给定节点的左节点为空,但是父节点不为空,一直找父节点(父节点是他自己父节点的右子树) 则是前驱
+ *              如果给定节点的左节点为空,父节点为空---前驱不存在
+ *         120打印器源代码地址:
+ *
+ *          删除节点:
+ *              叶子节点:
+ *              度为1的节点:
+ *              度为2的节点:
+ *
+ *         包含方法:
+ *
+ *         127二叉搜索树复杂度分析:
+ *              与高度有关  (最好O(h)==O(logN)    最坏: O(n))
+ *
+ *
+ *
+ *
+ *
  */
 public class BinarySearchTree<E> {   //extends Comparable  E遵守Comparable 实现 compareTo()
     private int size;
@@ -55,6 +83,8 @@ public class BinarySearchTree<E> {   //extends Comparable  E遵守Comparable 实
         //从根节点开始遍历
         preorderTraversal(root);
     }
+
+
 
     //遍历节点  遍历的后的结构时  根节点 ,  左子树  , 右子树
     //有其他方式:自己实现
@@ -95,6 +125,10 @@ public class BinarySearchTree<E> {   //extends Comparable  E遵守Comparable 实
         }
     }
 
+    /**
+     * 无法停止遍历 v1.0   修改visitor接口
+     * @param visitor
+     */
     public void levelOrder(Visitor<E> visitor){
         if (root == null || visitor ==null){
             return;
@@ -106,7 +140,8 @@ public class BinarySearchTree<E> {   //extends Comparable  E遵守Comparable 实
             //出队
             Node<E> node = queue.poll();
             //访问  设计模式相关(访问者模式)
-            visitor.visit(node.element);
+            if (visitor.visit(node.element))
+                return;
             if (node.left!=null){
                 queue.offer(node.left);
             }
@@ -118,7 +153,12 @@ public class BinarySearchTree<E> {   //extends Comparable  E遵守Comparable 实
 
 
     public static interface Visitor<E> {
-        void visit(E element);
+        /**
+         * 如果返回true表示 停止遍历
+         * @param element
+         * @return
+         */
+        boolean visit(E element);
     }
 
     /**添加元素
