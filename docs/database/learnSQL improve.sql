@@ -1,0 +1,9 @@
+-- 查询性能估计
+-- select 查询速度
+		-- 由于mysql优化器在不断升级,所以可能不够详尽
+		-- WHERE子句优化 (也适用于指令 update delete) 
+				-- 去除不必要的括号 ((a AND b) AND c OR (((a AND b) AND (c AND d))))  -> (a AND b AND c) OR (a AND b AND c AND d)
+				-- 常量重叠 (a<b AND b=c) AND a=5  -> b>5 AND b=c AND a=5
+				-- 去除常量条件(由于常量重叠需要)：  不够详细
+		-- where 优化
+				-- 
